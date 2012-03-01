@@ -37,7 +37,7 @@ CPP = gcc -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-USERPROGS = halt shell matmult sort
+USERPROGS = halt shell matmult sort print
 
 all: $(USERPROGS)
 
@@ -63,6 +63,12 @@ sort.o: sort.c
 sort: sort.o start.o
 	$(LD) $(LDFLAGS) start.o sort.o -o sort.coff
 	../bin/coff2noff sort.coff sort
+
+print.o: print.c
+	$(CC) $(CFLAGS) -c print.c
+print: print.o start.o
+	$(LD) $(LDFLAGS) start.o print.o -o print.coff
+	../bin/coff2noff print.coff print
 
 matmult.o: matmult.c
 	$(CC) $(CFLAGS) -c matmult.c
