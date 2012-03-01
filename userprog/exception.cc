@@ -24,6 +24,10 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define BUF_SIZE 100
 char buf[BUF_SIZE];
@@ -85,7 +89,10 @@ ExceptionHandler(ExceptionType which)
                          DEBUG('a', "Shutdown, initiated by user program.\n");
                          interrupt->Halt();
                          break;
-		case SC_Print:	{
+
+
+		case SC_Print:	
+		      {
 			DEBUG('a', "Print() system call invoked \n");
 			int vaddr = machine->ReadRegister(4);
 			// This address (pointer to the string to be printed) is 
@@ -120,6 +127,89 @@ ExceptionHandler(ExceptionType which)
 			updatePC();
 			}
 			break; // SC_Print
+
+		case SC_Open:
+			{	
+				DEBUG('a', "Print() system call invoked \n");	
+				int fd1 = machine->ReadRegister(4);
+				int size = 0;
+				buf[BUF_SIZE - 1] = '\0';       
+				do{
+					machine->ReadMem(fd1,sizeof(char),(int*)(buf+size));                
+					fd1+=sizeof(char);
+				        size++;
+				  } while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
+				size--;
+				DEBUG('a', "Size of string = %d", size);
+				int fd = open(buf,O_CREAT|O_RDWR,0666);
+				machine->WriteRegister(2,fd);
+				bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
+				updatePC();
+			}
+			break;
+ 		case SC_Close : 
+			{  
+				DEBUG('a', "Close() system call invoked \n");
+			  	int fd2 = machine->ReadRegister(4);
+				close(fd2);
+				updatePC();
+			}	
+			break;	 
+		case SC_Write:	
+			{
+				DEBUG('a', "Write() system call invoked \n");
+				int ipstring = machine->ReadRegister(4);
+				int ipsize = machine->ReadRegister(5);
+				int fd3 = machine->ReadRegister(6);
+				int size = 0;
+				buf[BUF_SIZE - 1] = '\0';               // For safety.
+				do{
+					machine->ReadMem(ipstring,    // Location to be read
+					sizeof(char),      // Size of data to be read
+					(int*)(buf+size)   // where the read contents 
+					);                 // are stored
+					ipstring+=sizeof(char);    
+					size++;
+				  } while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
+				size--;
+				DEBUG('a', "Size of string = %d", size);
+				if( ipsize > size )
+		  		ipsize = size;
+				printf("Content To Be Written : %s", buf);
+				if( (write(fd3,buf,ipsize)) < 0)
+		  			printf("ERROR\n");
+				bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
+				updatePC();
+		    	}
+			break; 
+		case SC_Read:	
+		{
+			DEBUG('a', "Read() system call invoked \n");
+			int ipstring = machine->ReadRegister(4);
+			int ipsize = machine->ReadRegister(5);
+			int fd4 = machine->ReadRegister(6);	
+			bzero(buf, sizeof(char)*BUF_SIZE);
+			int sizeread;
+			sizeread = read(fd4,buf,ipsize);
+			if( sizeread < 0)
+				  printf("ERROR\n");
+			printf("\nContent Read : %s\n", buf);
+			int size;
+			for(size =0; size < sizeread ; size++ )
+			{
+				machine->WriteMem(ipstring,    
+				sizeof(char),      
+				(int)(buf+size)   
+				);                
+				ipstring+=sizeof(char);
+			}
+			size--;
+			DEBUG('a', "Size of string = %d", size);
+			machine->WriteRegister(2,sizeread);
+			bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
+			updatePC();
+		 }
+			break; // SC_Read
 
                 default:
                         printf("Unknown/Unimplemented system call %d!", type);
