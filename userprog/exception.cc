@@ -199,7 +199,7 @@ ExceptionHandler(ExceptionType which)
 			{
 				machine->WriteMem(ipstring,    
 				sizeof(char),      
-				(int)(buf+size)   
+				(int)(*(buf+size))   
 				);                
 				ipstring+=sizeof(char);
 			}

@@ -10,6 +10,7 @@
 	Close(fd);
 	fd = Open("newfile.txt");
 	rd = Read(buff,12,fd);	
+	Print(buff);
 	Close(fd);
 	  Halt();	// Optional. Just print stats
   }
