@@ -30,6 +30,7 @@
 #define SC_Fork		9
 #define SC_Yield	10
 #define SC_Print	11
+#define SC_Delete	12
 
 #ifndef IN_ASM
 
@@ -129,6 +130,10 @@ void Fork(void (*func)());
  */
 void Yield();		
 
+
+
+/* Deletes a file from the filesystem */
+void Delete(char *str);
 #endif /* IN_ASM */
 
 #endif /* SYSCALL_H */

@@ -211,6 +211,47 @@ ExceptionHandler(ExceptionType which)
 		 }
 			break; // SC_Read
 
+		case SC_Delete:	
+		      {
+			DEBUG('a', "Delete() system call invoked \n");
+			int vaddr = machine->ReadRegister(4);
+			// This address (pointer to the string to be printed) is 
+			// the address that pointes to the user address space.
+			// Simply trying printf("%s", (char*)addr) will not work
+			// as we are now in kernel space.
+
+			// Get the string from user space.
+
+			int size = 0;
+
+			buf[BUF_SIZE - 1] = '\0';               // For safety.
+
+			do{
+				// Invoke ReadMem to read the contents from user space
+
+				machine->ReadMem(vaddr,    // Location to be read
+					sizeof(char),      // Size of data to be read
+					(int*)(buf+size)   // where the read contents 
+					);                 // are stored
+
+				// Compute next address
+				vaddr+=sizeof(char);    size++;
+
+			} while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
+
+			size--;
+			DEBUG('a', "Filename size = %d", size);
+
+			int ret = unlink(buf);
+			if(ret<0)
+				printf("Error");
+			else
+				printf("\nFile Deleted\n");
+			bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
+			updatePC();
+			}
+			break; // SC_Print
+
                 default:
                         printf("Unknown/Unimplemented system call %d!", type);
                         ASSERT(FALSE); // Should never happen
