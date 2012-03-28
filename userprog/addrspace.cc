@@ -109,7 +109,11 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    bzero(machine->mainMemory, size);
+	for(i=0; i<numPages; i++)
+	{
+		bzero( &(machine->mainMemory[pageTable[i].physicalPage * PageSize]), PageSize );
+	}
+
 
 // then, copy in the code and data segments into memory
 
@@ -130,6 +134,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 */
 
+  if (noffH.code.size > 0) {
+	   DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+	   
+    }
 }
 
 //----------------------------------------------------------------------
