@@ -97,7 +97,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = Machine->AllocatePage();
+	pageTable[i].physicalPage = machine->AllocatePage();
+	DEBUG('a',"PageTable %d\n",pageTable[i].physicalPage);
 	ASSERT(	pageTable[i].physicalPage >=0 );
 	pageTable[i].valid = TRUE;
 	pageTable[i].use = FALSE;
@@ -118,7 +119,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
 // then, copy in the code and data segments into memory
 
 
-/*
+
+
   if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
 			noffH.code.virtualAddr, noffH.code.size);
@@ -131,13 +133,14 @@ AddrSpace::AddrSpace(OpenFile *executable)
         executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
-
-*/
-
+	
+ 
+ /*
   if (noffH.code.size > 0) {
-	   DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
-	   
-    }
+		DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+		int page_num = noffH.code.virtualAddr / PageSize;
+	}
+   */
 }
 
 //----------------------------------------------------------------------

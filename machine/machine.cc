@@ -55,7 +55,6 @@ void CheckEndian()
 Machine::Machine(bool debug)
 {
     int i;
-
     for (i = 0; i < NumTotalRegs; i++)
         registers[i] = 0;
     mainMemory = new char[MemorySize];
@@ -66,17 +65,14 @@ Machine::Machine(bool debug)
     for (i = 0; i < TLBSize; i++)
 	tlb[i].valid = FALSE;
     pageTable = NULL;
-
-    memFreeList = new int[NumPhysPages];
-    for (i = 0; i < NumPhysPages; i++)
-	memFreeList[i] = 0;
-
 #else	// use linear page table
     tlb = NULL;
     pageTable = NULL;
 #endif
 
-
+   memFreeList = new int[NumPhysPages];
+   for (i = 0; i < NumPhysPages; i++)
+		memFreeList[i] = 0;
     singleStep = debug;
     CheckEndian();
 }
@@ -218,8 +214,8 @@ void Machine::WriteRegister(int num, int value)
 	registers[num] = value;
     }
 
-void Machine::AllocatePage()
-{
+int Machine::AllocatePage()
+{	
 	int i=0;
 	while(i<NumPhysPages)
 	{
