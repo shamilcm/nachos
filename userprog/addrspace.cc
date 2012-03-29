@@ -36,8 +36,6 @@
 
 
 
-
-
 static void 
 SwapHeader (NoffHeader *noffH)
 {
@@ -120,7 +118,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 
 
-
+ /*
   if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
 			noffH.code.virtualAddr, noffH.code.size);
@@ -134,13 +132,28 @@ AddrSpace::AddrSpace(OpenFile *executable)
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
 	
- 
- /*
+    */
+int vpos;
+
   if (noffH.code.size > 0) {
 		DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
-		int page_num = noffH.code.virtualAddr / PageSize;
+		vpos = noffH.code.virtualAddr;
+		while(vpos < (noffH.code.size + noffH.code.virtualAddr) )
+		{
+			executable->ReadAt(&(machine->mainMemory[AddrTrans(vpos)]), 1, noffH.code.inFileAddr + (vpos - noffH.code.virtualAddr)),
+			vpos++;
+		}
 	}
-   */
+  if (noffH.initData.size > 0) {
+		DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
+		vpos = noffH.initData.virtualAddr;
+		while(vpos < (noffH.initData.size + noffH.initData.virtualAddr) )
+		{
+			executable->ReadAt(&(machine->mainMemory[AddrTrans(vpos)]), 1, noffH.initData.inFileAddr + (vpos - noffH.initData.virtualAddr)),
+			vpos++;
+		}
+	}
+
 }
 
 //----------------------------------------------------------------------
@@ -150,8 +163,14 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 AddrSpace::~AddrSpace()
 {
+	int i;
+	while(i<numPages)
+	{
+		machine->memFreeList[pageTable[i].physicalPage] = 0;
+	}   
    delete pageTable;
 }
+
 
 //----------------------------------------------------------------------
 // AddrSpace::InitRegisters
@@ -194,7 +213,10 @@ AddrSpace::InitRegisters()
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState() 
-{}
+{
+	pageTable=machine->pageTable;
+    numPages=machine->pageTableSize;
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState
@@ -209,3 +231,12 @@ void AddrSpace::RestoreState()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+
+
+int AddrSpace::AddrTrans ( int virtAddr)
+{
+	int x;
+	x = pageTable[virtAddr/PageSize].physicalPage * PageSize + (virtAddr %PageSize);
+	return x;
+}
+

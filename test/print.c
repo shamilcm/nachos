@@ -1,6 +1,8 @@
   #include "syscall.h"
   void main()
   {
-    Print("Hello World\n");
+	int fd;    
+	Print("Hello World\n");
+     fd = Exec("./test/load");
     Halt();	// Optional. Just print stats
   }

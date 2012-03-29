@@ -185,7 +185,7 @@ class Machine {
 
 
 	int AllocatePage();
-
+ int* memFreeList;	
 	
 
   private:
@@ -193,7 +193,7 @@ class Machine {
 				// simulated instruction
     int runUntilTime;		// drop back into the debugger when simulated
 				// time reaches this value
-    unsigned int* memFreeList;	
+   
 };
 
 extern void ExceptionHandler(ExceptionType which);
