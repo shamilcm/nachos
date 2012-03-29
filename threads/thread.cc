@@ -32,6 +32,8 @@
 //	"threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 
+
+
 Thread::Thread(char* threadName)
 {
     name = threadName;
@@ -63,6 +65,7 @@ Thread::~Thread()
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
 }
+
 
 //----------------------------------------------------------------------
 // Thread::Fork
@@ -237,6 +240,21 @@ static void ThreadFinish()    { currentThread->Finish(); }
 static void InterruptEnable() { interrupt->Enable(); }
 void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
 
+void setUpThread(){
+	if(threadToBeDestroyed != NULL ){
+		delete threadToBeDestroyed;
+		threadToBeDestroyed = NULL;
+	}
+#ifdef USER_PROGRAM
+	if(currentThread->space != NULL ){
+		currentThread->RestoreUserState();
+		currentThread->space->RestoreState();
+	}
+#endif
+	InterruptEnable();
+}
+
+
 //----------------------------------------------------------------------
 // Thread::StackAllocate
 //	Allocate and initialize an execution stack.  The stack is
@@ -277,7 +295,10 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
 #endif  // HOST_SNAKE
     
     machineState[PCState] = (int) ThreadRoot;
-    machineState[StartupPCState] = (int) InterruptEnable;
+    //machineState[StartupPCState] = (int) InterruptEnable;
+    machineState[StartupPCState] = (int) setUpThread;
+
+    
     machineState[InitialPCState] = (int) func;
     machineState[InitialArgState] = arg;
     machineState[WhenDonePCState] = (int) ThreadFinish;
@@ -318,3 +339,12 @@ Thread::RestoreUserState()
 	machine->WriteRegister(i, userRegisters[i]);
 }
 #endif
+
+
+
+
+void Thread::ChangeUserReg(int reg, int val)
+{
+  DEBUG('t', "Changing user state %s\n", getName());
+  userRegisters[reg] = val;
+}

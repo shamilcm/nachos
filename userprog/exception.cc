@@ -32,6 +32,7 @@
 #define BUF_SIZE 100
 char buf[BUF_SIZE];
 int arg1,arg2,arg3,arg4;
+static int pid1=0;
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -54,6 +55,11 @@ int arg1,arg2,arg3,arg4;
 //	"which" is the kind of exception.  The list of possible exceptions 
 //	are in machine.h.
 //----------------------------------------------------------------------
+void StartUserThread(int arg)
+{
+  machine->Run();
+}
+
 void updatePC(){
 
 		// Note that we have to maintain three PC registers, 
@@ -132,6 +138,41 @@ ExceptionHandler(ExceptionType which)
 			updatePC();
 		}
 		break;   //SC_Exec                    
+
+		case SC_Exit:
+		{
+
+		}
+		break;   //SC_Exit                    
+
+
+
+		case SC_Fork:
+		{
+				DEBUG('a', "Fork, initiated by the user program.\n");
+				arg1 = machine->ReadRegister(4);
+				char buf[20];
+				sprintf(buf, "Thread %d", pid1++);
+				Thread* thread = new Thread(buf);			
+				 thread->pid = pid1++;
+				thread->space = currentThread->space;
+				//thread->parent = currentThread;
+				thread->SaveUserState();
+				thread->ChangeUserReg(4,0);
+				thread->ChangeUserReg(PCReg, arg1);	
+				thread->ChangeUserReg(NextPCReg, arg1 + 4);
+				thread->Fork((VoidFunctionPtr)StartUserThread, arg1);			
+				machine->WriteRegister(2, pid1-1);
+				currentThread->Yield();
+				updatePC();
+		}
+		break;   //SC_Fork                    
+
+
+
+
+
+
         
                 case SC_Print:
                 {

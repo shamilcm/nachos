@@ -127,7 +127,9 @@ void Yield();
 
 /* Prints a string passed as argument
    */
-void Print(char* str);		
+void Print(char* str);	
+
+	
 
 #endif /* IN_ASM */
 
