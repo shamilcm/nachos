@@ -32,10 +32,6 @@
 
 
 
-/* Function to allocate physical pages to a process */
-
-
-
 static void 
 SwapHeader (NoffHeader *noffH)
 {
@@ -66,7 +62,7 @@ SwapHeader (NoffHeader *noffH)
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
-AddrSpace::AddrSpace(OpenFile *executable)
+void AddrSpace::AllocateAddrSpace(OpenFile *executable)
 {
     NoffHeader noffH;
     unsigned int i, size;
@@ -89,15 +85,13 @@ AddrSpace::AddrSpace(OpenFile *executable)
 						// at least until we have
 						// virtual memory
 
-    DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
+    DEBUG('t', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
 // first, set up the translation 
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
 	pageTable[i].physicalPage = machine->AllocatePage();
-	DEBUG('a',"PageTable %d\n",pageTable[i].physicalPage);
-	ASSERT(	pageTable[i].physicalPage >=0 );
 	pageTable[i].valid = TRUE;
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
@@ -108,31 +102,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
+    //bzero(machine->mainMemory, size);
 	for(i=0; i<numPages; i++)
 	{
 		bzero( &(machine->mainMemory[pageTable[i].physicalPage * PageSize]), PageSize );
 	}
 
-
-// then, copy in the code and data segments into memory
-
-
-
- /*
-  if (noffH.code.size > 0) {
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
-			noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
-			noffH.code.size, noffH.code.inFileAddr);
-    }
-    if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
-			noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
-			noffH.initData.size, noffH.initData.inFileAddr);
-    }
-	
-    */
 int vpos;
 
   if (noffH.code.size > 0) {
@@ -154,6 +129,7 @@ int vpos;
 		}
 	}
 
+
 }
 
 //----------------------------------------------------------------------
@@ -161,16 +137,13 @@ int vpos;
 // 	Dealloate an address space.  Nothing for now!
 //----------------------------------------------------------------------
 
-AddrSpace::~AddrSpace()
+void AddrSpace::ReleaseAddrSpace()
 {
 	int i;
-	while(i<numPages)
-	{
+	for(i=0; i<numPages; i++)
 		machine->memFreeList[pageTable[i].physicalPage] = 0;
-	}   
-   delete pageTable;
+   	delete pageTable;
 }
-
 
 //----------------------------------------------------------------------
 // AddrSpace::InitRegisters
@@ -201,7 +174,7 @@ AddrSpace::InitRegisters()
    // allocated the stack; but subtract off a bit, to make sure we don't
    // accidentally reference off the end!
     machine->WriteRegister(StackReg, numPages * PageSize - 16);
-    DEBUG('a', "Initializing stack register to %d\n", numPages * PageSize - 16);
+    DEBUG('t', "Initializing stack register to %d\n", numPages * PageSize - 16);
 }
 
 //----------------------------------------------------------------------
@@ -214,8 +187,8 @@ AddrSpace::InitRegisters()
 
 void AddrSpace::SaveState() 
 {
-	pageTable=machine->pageTable;
-    numPages=machine->pageTableSize;
+	pageTable = machine->pageTable;
+  	numPages = machine->pageTableSize;
 }
 
 //----------------------------------------------------------------------
@@ -231,7 +204,6 @@ void AddrSpace::RestoreState()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
-
 
 int AddrSpace::AddrTrans ( int virtAddr)
 {

@@ -370,10 +370,9 @@ exception.o: ../userprog/exception.cc ../bin/copyright.h \
  ../userprog/addrspace.h ../filesys/filesys.h ../filesys/openfile.h \
  ../threads/scheduler.h ../threads/list.h ../machine/interrupt.h \
  ../threads/list.h ../machine/stats.h ../machine/timer.h \
- ../userprog/syscall.h /usr/include/fcntl.h \
- /usr/include/i386-linux-gnu/bits/fcntl.h \
- /usr/include/i386-linux-gnu/sys/types.h /usr/include/time.h \
- /usr/include/endian.h /usr/include/i386-linux-gnu/bits/endian.h \
+ ../userprog/syscall.h /usr/include/i386-linux-gnu/sys/types.h \
+ /usr/include/time.h /usr/include/endian.h \
+ /usr/include/i386-linux-gnu/bits/endian.h \
  /usr/include/i386-linux-gnu/bits/byteswap.h \
  /usr/include/i386-linux-gnu/sys/select.h \
  /usr/include/i386-linux-gnu/bits/select.h \
@@ -381,9 +380,10 @@ exception.o: ../userprog/exception.cc ../bin/copyright.h \
  /usr/include/i386-linux-gnu/bits/time.h \
  /usr/include/i386-linux-gnu/sys/sysmacros.h \
  /usr/include/i386-linux-gnu/bits/pthreadtypes.h \
- /usr/include/i386-linux-gnu/bits/uio.h \
- /usr/include/i386-linux-gnu/bits/stat.h \
- /usr/include/i386-linux-gnu/sys/stat.h /usr/include/unistd.h \
+ /usr/include/i386-linux-gnu/sys/stat.h \
+ /usr/include/i386-linux-gnu/bits/stat.h /usr/include/fcntl.h \
+ /usr/include/i386-linux-gnu/bits/fcntl.h \
+ /usr/include/i386-linux-gnu/bits/uio.h /usr/include/unistd.h \
  /usr/include/i386-linux-gnu/bits/posix_opt.h \
  /usr/include/i386-linux-gnu/bits/environments.h \
  /usr/include/i386-linux-gnu/bits/confname.h /usr/include/getopt.h

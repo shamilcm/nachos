@@ -29,8 +29,7 @@
 #define SC_Close	8
 #define SC_Fork		9
 #define SC_Yield	10
-#define SC_Print	11
-#define SC_Delete	12
+#define SC_Print        11
 
 #ifndef IN_ASM
 
@@ -87,11 +86,7 @@ typedef int OpenFileId;
 
 #define ConsoleInput	0  
 #define ConsoleOutput	1  
-
-/* Print a string */
-void Print(char *str);
-
-
+ 
 /* Create a Nachos file, with "name" */
 void Create(char *name);
 
@@ -128,12 +123,12 @@ void Fork(void (*func)());
 /* Yield the CPU to another runnable thread, whether in this address space 
  * or not. 
  */
-void Yield();		
+void Yield();
 
+/* Prints a string passed as argument
+   */
+void Print(char* str);		
 
-
-/* Deletes a file from the filesystem */
-void Delete(char *str);
 #endif /* IN_ASM */
 
 #endif /* SYSCALL_H */

@@ -24,13 +24,14 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
-#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #define BUF_SIZE 100
 char buf[BUF_SIZE];
+int arg1,arg2,arg3,arg4;
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -64,7 +65,7 @@ void updatePC(){
 		prevpc = machine->ReadRegister(PrevPCReg);
 		pc = machine->ReadRegister(PCReg);
 		nextpc = machine->ReadRegister(NextPCReg);
-		
+
 		// Update PCs
 		prevpc = pc;
 		pc = nextpc;
@@ -80,21 +81,22 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
- switch(which)
+    OpenFile *executable;
+    AddrSpace *space;
+    switch(which)
     {
         case SyscallException:
             switch(type)
             {
                 case SC_Halt:
-                         DEBUG('a', "Shutdown, initiated by user program.\n");
+                         DEBUG('z', "Shutdown, initiated by user program.\n");
                          interrupt->Halt();
                          break;
-
+                
 		case SC_Exec:
 		{
 			DEBUG('a', "Exec system call invoked\n");
-			int arg1 = machine->ReadRegister(4);
-			OpenFile* executable;			
+			arg1 = machine->ReadRegister(4);
 			buf[BUF_SIZE - 1] = '\0';
 			int size = 0;
 			do
@@ -112,18 +114,16 @@ ExceptionHandler(ExceptionType which)
 				updatePC();
 				break;
 			}
-			/*
+			
 			currentThread->space->ReleaseAddrSpace();
 			space = new AddrSpace();
 			space->AllocateAddrSpace(executable);
 			currentThread->space = space;
 
 			delete executable;			// close file
-			*/
-			delete currentThread->space;
-			currentThread->space = new AddrSpace(executable);
-			currentThread->space->InitRegisters();		// set the initial register values
-			currentThread->space->RestoreState();		// load page table register
+
+			space->InitRegisters();		// set the initial register values
+			space->RestoreState();		// load page table register
 
 			machine->Run();			// jump to the user progam
 			ASSERT(FALSE);	
@@ -131,10 +131,12 @@ ExceptionHandler(ExceptionType which)
 			bzero(buf, BUF_SIZE);
 			updatePC();
 		}
-		case SC_Print:	
-		      {
-			DEBUG('a', "Print() system call invoked \n");
-			int vaddr = machine->ReadRegister(4);
+		break;   //SC_Exec                    
+        
+                case SC_Print:
+                {
+			DEBUG('z', "Print() system call invoked \n");
+			arg1 = machine->ReadRegister(4); //mem addr of string to be print
 			// This address (pointer to the string to be printed) is 
 			// the address that pointes to the user address space.
 			// Simply trying printf("%s", (char*)addr) will not work
@@ -149,112 +151,105 @@ ExceptionHandler(ExceptionType which)
 			do{
 				// Invoke ReadMem to read the contents from user space
 
-				machine->ReadMem(vaddr,    // Location to be read
+				machine->ReadMem(arg1,    // Location to be read
 					sizeof(char),      // Size of data to be read
 					(int*)(buf+size)   // where the read contents 
 					);                 // are stored
 
 				// Compute next address
-				vaddr+=sizeof(char);    size++;
+				arg1+=sizeof(char);    size++;
 
 			} while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
 
 			size--;
-			DEBUG('a', "Size of string = %d", size);
-
-			printf("%s", buf);
+			DEBUG('z', "Size of string = %d\n", size);
+			printf("%s\n", buf);
 			bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
 			updatePC();
-			}
-			break; // SC_Print
-
+		}
+		break; // SC_Print
+		
 		case SC_Open:
-			{	
-				DEBUG('a', "Print() system call invoked \n");	
-				int fd1 = machine->ReadRegister(4);
-				int size = 0;
-				buf[BUF_SIZE - 1] = '\0';       
-				do{
-					machine->ReadMem(fd1,sizeof(char),(int*)(buf+size));                
-					fd1+=sizeof(char);
-				        size++;
-				  } while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
-				size--;
-				DEBUG('a', "Size of string = %d", size);
-				int fd = open(buf,O_CREAT|O_RDWR,0666);
-				machine->WriteRegister(2,fd);
-				bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
-				updatePC();
-			}
-			break;
- 		case SC_Close : 
-			{  
-				DEBUG('a', "Close() system call invoked \n");
-			  	int fd2 = machine->ReadRegister(4);
-				close(fd2);
-				updatePC();
-			}	
-			break;	 
-		case SC_Write:	
-			{
-				DEBUG('a', "Write() system call invoked \n");
-				int ipstring = machine->ReadRegister(4);
-				int ipsize = machine->ReadRegister(5);
-				int fd3 = machine->ReadRegister(6);
-				int size = 0;
-				buf[BUF_SIZE - 1] = '\0';               // For safety.
-				do{
-					machine->ReadMem(ipstring,    // Location to be read
+                {
+			DEBUG('z', "Open() system call invoked \n");
+			arg1 = machine->ReadRegister(4); //mem addr of name of file
+			// This address (pointer to the string to be printed) is 
+			// the address that pointes to the user address space.
+			// Simply trying printf("%s", (char*)addr) will not work
+			// as we are now in kernel space.
+
+			// Get the string from user space.
+
+			int size = 0;
+
+			buf[BUF_SIZE - 1] = '\0';               // For safety.
+
+			do{
+				// Invoke ReadMem to read the contents from user space
+
+				machine->ReadMem(arg1,    // Location to be read
 					sizeof(char),      // Size of data to be read
 					(int*)(buf+size)   // where the read contents 
 					);                 // are stored
-					ipstring+=sizeof(char);    
-					size++;
-				  } while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
-				size--;
-				DEBUG('a', "Size of string = %d", size);
-				if( ipsize > size )
-		  		ipsize = size;
-				printf("Content To Be Written : %s", buf);
-				if( (write(fd3,buf,ipsize)) < 0)
-		  			printf("ERROR\n");
-				bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
-				updatePC();
-		    	}
-			break; 
-		case SC_Read:	
-		{
-			DEBUG('a', "Read() system call invoked \n");
-			int ipstring = machine->ReadRegister(4);
-			int ipsize = machine->ReadRegister(5);
-			int fd4 = machine->ReadRegister(6);	
-			bzero(buf, sizeof(char)*BUF_SIZE);
-			int sizeread;
-			sizeread = read(fd4,buf,ipsize);
-			if( sizeread < 0)
-				  printf("ERROR\n");
-			printf("\nContent Read : %s\n", buf);
-			int size;
-			for(size =0; size < sizeread ; size++ )
-			{
-				machine->WriteMem(ipstring,    
-				sizeof(char),      
-				(int)(*(buf+size))   
-				);                
-				ipstring+=sizeof(char);
-			}
+
+				// Compute next address
+				arg1+=sizeof(char);    size++;
+
+			} while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
+
 			size--;
-			DEBUG('a', "Size of string = %d", size);
+			DEBUG('z', "Size of string = %d\n", size);
+			int fd=open(buf,O_CREAT | O_RDWR,0666);
+			if(fd<0)
+				printf("Error opening file\n");
+			machine->WriteRegister(2,fd);			
+			bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
+			updatePC();
+		}
+		break; // SC_Open
+		
+		case SC_Read:
+                {
+			DEBUG('z', "Read() system call invoked \n");
+			arg1 = machine->ReadRegister(4); //addr of string to store
+			arg2 = machine->ReadRegister(5); //no of charaters to read
+			arg3 = machine->ReadRegister(6); //file descriptor
+			// This address (pointer to the string to be printed) is 
+			// the address that pointes to the user address space.
+			// Simply trying printf("%s", (char*)addr) will not work
+			// as we are now in kernel space.
+
+			// Get the string from user space.
+			int sizeread=read(arg3,buf,arg2);
+			if(sizeread<0)
+				printf("Error reading from file");
+
+			int size = 0;
+			while( size<sizeread && size < (BUF_SIZE - 1))
+			{
+				// Invoke ReadMem to read the contents from user space
+
+				machine->WriteMem(arg1,    // Location to write
+					sizeof(char),      // Size of data to be write
+					(int)(*(buf+size))   // where the write contents 
+					);                 // are stored
+
+				// Compute next address
+				arg1+=sizeof(char);    size++;
+			}
+			DEBUG('z', "Size of string = %d\n", size);
 			machine->WriteRegister(2,sizeread);
 			bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
 			updatePC();
-		 }
-			break; // SC_Read
-
-		case SC_Delete:	
-		      {
-			DEBUG('a', "Delete() system call invoked \n");
-			int vaddr = machine->ReadRegister(4);
+		}
+		break; // SC_Read		
+		
+		case SC_Write:
+                {
+			DEBUG('z', "Write() system call invoked \n");
+			arg1 = machine->ReadRegister(4); //addr of string to write
+			arg2 = machine->ReadRegister(5); //no of charaters to write
+			arg3 = machine->ReadRegister(6); //file descriptor
 			// This address (pointer to the string to be printed) is 
 			// the address that pointes to the user address space.
 			// Simply trying printf("%s", (char*)addr) will not work
@@ -269,28 +264,37 @@ ExceptionHandler(ExceptionType which)
 			do{
 				// Invoke ReadMem to read the contents from user space
 
-				machine->ReadMem(vaddr,    // Location to be read
+				machine->ReadMem(arg1,    // Location to be read
 					sizeof(char),      // Size of data to be read
 					(int*)(buf+size)   // where the read contents 
 					);                 // are stored
 
 				// Compute next address
-				vaddr+=sizeof(char);    size++;
+				arg1+=sizeof(char);    size++;
 
 			} while( size < (BUF_SIZE - 1) && buf[size-1] != '\0');
 
 			size--;
-			DEBUG('a', "Filename size = %d", size);
-
-			int ret = unlink(buf);
-			if(ret<0)
-				printf("Error");
-			else
-				printf("\nFile Deleted\n");
+			DEBUG('z', "Size of string = %d\n", size);
+			if(arg2>size)
+				arg2=size;
+			if(write(arg3,buf,arg2)<0)
+				printf("Error writing to file\n");
 			bzero(buf, sizeof(char)*BUF_SIZE);  // Zeroing the buffer.
 			updatePC();
-			}
-			break; // SC_Print
+		}
+		break; // SC_Write
+		
+		case SC_Close:
+                {
+			DEBUG('z', "Close() system call invoked \n");
+			arg1 = machine->ReadRegister(4); //filedescriptor of file to be closed
+			DEBUG('z', "File Descriptor = %d\n", arg1);
+			if(close(arg1)<0)
+				printf("Error closing file\n");
+			updatePC();
+		}
+		break; // SC_Close
 
                 default:
                         printf("Unknown/Unimplemented system call %d!", type);

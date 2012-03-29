@@ -12,7 +12,6 @@
 	rd = Read(buff,12,fd);	
 	Print(buff);
 	Close(fd);
-	Delete("newfile.txt");
 	  Halt();	// Optional. Just print stats
   }
 
