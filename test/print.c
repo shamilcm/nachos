@@ -1,15 +1,22 @@
   #include "syscall.h"
 
-
+int a()
+{
+	int i;
+	Print("XABC");
+	Exit(i);
+}
   int test()
   {
+	
 	int i;
+	
 		Print ("forked\n");
-		
+		Fork(a);
 		 i=0;	 	
 		while(i++<1000);
 		Print ("forked1\n");
-		
+		Exit(i);
 	
   }
   void main()
@@ -20,7 +27,8 @@
 	Fork(test);
 	
 		Print("main\n");
-Print("main1\n");
+
 	
 	Halt();	// Optional. Just print stats
   }
+ 
