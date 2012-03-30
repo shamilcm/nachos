@@ -1,34 +1,30 @@
-  #include "syscall.h"
+#include "syscall.h"
 
-int a()
+
+int f2()
+{
+  int i;
+  Print("Fork f2\n");
+  Exit(i);
+}
+
+int f1()
 {
 	int i;
-	Print("XABC");
-	Exit(i);
+	Print ("forked\n");
+	Fork(f2);
+	 i=0;	 	
+	while(i++<1000);
+	Print("Fork f1\n");
+	Exit(0);
 }
-  int test()
-  {
-	
-	int i;
-	
-		Print ("forked\n");
-		Fork(a);
-		 i=0;	 	
-		while(i++<1000);
-		Print ("forked1\n");
-		Exit(i);
-	
-  }
-  void main()
-  {
-	int fd;    
-	Print("Hello World\n");
-     //fd = Exec("./test/load");
-	Fork(test);
-	
-		Print("main\n");
 
-	
-	Halt();	// Optional. Just print stats
-  }
- 
+void main()
+{
+  int fd; 
+  Print("Fork\n");
+   Fork(f1);
+  Print("After Fork\n");
+
+
+}

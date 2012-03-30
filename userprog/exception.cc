@@ -141,7 +141,7 @@ ExceptionHandler(ExceptionType which)
 
 		case SC_Exit:
 		{
-
+			currentThread->Finish();
 		}
 		break;   //SC_Exit                    
 
@@ -155,7 +155,7 @@ ExceptionHandler(ExceptionType which)
 				sprintf(buf, "Thread %d", pid1++);
 				Thread* thread = new Thread(buf);			
 				 thread->pid = pid1++;
-				thread->space = currentThread->space;
+				thread->space = new AddrSpace(*currentThread->space);
 				//thread->parent = currentThread;
 				thread->SaveUserState();
 				thread->ChangeUserReg(4,0);
@@ -174,7 +174,7 @@ ExceptionHandler(ExceptionType which)
 
 
         
-                case SC_Print:
+         case SC_Print:
                 {
 			DEBUG('z', "Print() system call invoked \n");
 			arg1 = machine->ReadRegister(4); //mem addr of string to be print

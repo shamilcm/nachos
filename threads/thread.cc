@@ -240,18 +240,20 @@ static void ThreadFinish()    { currentThread->Finish(); }
 static void InterruptEnable() { interrupt->Enable(); }
 void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
 
-void setUpThread(){
-	if(threadToBeDestroyed != NULL ){
-		delete threadToBeDestroyed;
-		threadToBeDestroyed = NULL;
-	}
-#ifdef USER_PROGRAM
-	if(currentThread->space != NULL ){
-		currentThread->RestoreUserState();
-		currentThread->space->RestoreState();
-	}
-#endif
-	InterruptEnable();
+void ThreadSetUp()
+{
+  DEBUG('t', "Inside ThreadSetUp\n");
+  if(threadToBeDestroyed != NULL)
+    delete threadToBeDestroyed;
+  threadToBeDestroyed = NULL;
+  #ifdef USER_PROGRAM
+  if(currentThread->space != NULL)
+  {
+    currentThread->RestoreUserState();
+    currentThread->space->RestoreState();
+  }
+  interrupt->Enable();
+  #endif
 }
 
 
@@ -296,7 +298,7 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
     
     machineState[PCState] = (int) ThreadRoot;
     //machineState[StartupPCState] = (int) InterruptEnable;
-    machineState[StartupPCState] = (int) setUpThread;
+    machineState[StartupPCState] = (int) ThreadSetUp;
 
     
     machineState[InitialPCState] = (int) func;
